@@ -49,3 +49,5 @@ _Nothing recorded yet._
 | GAI-T26 | 2026-10-24 | chore | closed | Cut the v17 release: bump submodule to GTFO.EZ.Shared's Order cleanup, join CrashTestDummies/SkipDrop into the vN scheme, bump VERSION/manifest, rebuild and repackage dist/ | package/manifest.json |
 | GAI-T27 | 2026-10-26 | chore | closed | Cut the v18 release: moves in step with the GTFO.* family's version number, bump VERSION/manifest, rebuild and repackage dist/ | package/CHANGELOG.md |
 | GAI-T28 | 2026-11-01 | chore | closed | Rename repo to Mods.GTFO.EZ.AbsurdItems for mod organization (GitHub + folder + refs) | 682bb84cd5f98af41d4ac4b723f1559fddb80226 |
+| GAI-T29 | 2026-11-01 | fix | open | Verify/bug-hunt kits-as-loot balance, grenades out in the open, artifact glow/buffs; refresh docs, cut v19 release | — |
+| GAI-T30 | 2026-11-01 | chore | open | Cut the v19 release: bug-hunt pass found no new issues in kits/grenades/artifacts, bump VERSION/manifest, rebuild and repackage dist/ | — |

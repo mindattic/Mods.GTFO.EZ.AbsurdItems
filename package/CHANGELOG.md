@@ -1,5 +1,15 @@
 # Changelog
 
+## v19
+
+- Exhaustive bug-hunt pass over kit loot, Loot Mix (Hand Grenades/Stim Packs), the out-in-the-open
+  share, and artifact glow/buffs: confirmed kits are purely additive on top of the zone's own
+  resource budget, grenades and stim packs are in the default loot lottery and genuinely spawn out
+  in the open, and artifact buffs persist for the whole level (only a checkpoint restart of that
+  artifact removes them). No real bugs found - behavior unchanged.
+- Moves in step with the GTFO.EZ family's version number (GTFO.EZ, GTFO.EZ.AbsurdWeapons,
+  GTFO.EZ.AbsurdMoves and GTFO.EZ.AbsurdItems share one).
+
 ## v18
 
 - Moves in step with the GTFO.EZ family's version number (GTFO.EZ, GTFO.EZ.AbsurdWeapons,
