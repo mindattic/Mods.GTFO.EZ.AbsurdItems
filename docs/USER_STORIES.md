@@ -1,6 +1,6 @@
 ---
 codex: 1
-project: GTFO.EZ.AbsurdItems
+project: Mods.GTFO.EZ.AbsurdItems
 code: GAI
 layer: stories
 status: living
@@ -8,7 +8,7 @@ updated: 2026-10-18
 ---
 <!-- GENERATED from MindAttic.Tickets/data/Tickets.db by `tickets db render`. Do not edit: this file is rewritten from the database; change stories and tickets with the tickets CLI. -->
 
-# GTFO.EZ.AbsurdItems — User Stories
+# Mods.GTFO.EZ.AbsurdItems — User Stories
 > ✅ done (shipped & tested) · 🟡 partial · ⬜ planned. Every ✅ cites the test.
 
 ## Priority backlog
@@ -48,3 +48,4 @@ _Nothing recorded yet._
 | GAI-T25 | 2026-10-24 | chore | closed | Cut the v16 release: pull in GTFO.EZ.Shared's Insert/Delete swap and always-console-log fix (submodule bump), fix GTFO.* wording, rebuild and repackage dist/ | package/manifest.json |
 | GAI-T26 | 2026-10-24 | chore | closed | Cut the v17 release: bump submodule to GTFO.EZ.Shared's Order cleanup, join CrashTestDummies/SkipDrop into the vN scheme, bump VERSION/manifest, rebuild and repackage dist/ | package/manifest.json |
 | GAI-T27 | 2026-10-26 | chore | closed | Cut the v18 release: moves in step with the GTFO.* family's version number, bump VERSION/manifest, rebuild and repackage dist/ | package/CHANGELOG.md |
+| GAI-T28 | 2026-11-01 | chore | open | Rename repo to Mods.GTFO.EZ.AbsurdItems for mod organization (GitHub + folder + refs) | — |
