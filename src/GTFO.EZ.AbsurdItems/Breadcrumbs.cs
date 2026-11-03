@@ -50,8 +50,15 @@ internal static class Breadcrumbs
     private static readonly HashSet<IntPtr> openedDoors = new();
     private static readonly HashSet<IntPtr> visitedAreas = new();
 
+    // The markers dropped this level. They're plain root objects the level's own cleanup doesn't
+    // know about, so without this they'd stay floating where the last level's doors and lockers were.
+    private static readonly List<GameObject> markers = new();
+
     internal static void ResetForLevel()
     {
+        foreach (var marker in markers)
+            if (marker != null) UnityEngine.Object.Destroy(marker);
+        markers.Clear();
         openedContainers.Clear();
         unlockedDoors.Clear();
         openedDoors.Clear();
@@ -92,6 +99,7 @@ internal static class Breadcrumbs
         try
         {
             var go = new GameObject("GTFO.EZ.AbsurdItems Breadcrumb");
+            markers.Add(go);
             go.transform.position = position + Vector3.up * 0.05f;
             BuildModel(go.transform);
             var light = go.AddComponent<EffectLight>();
@@ -115,7 +123,12 @@ internal static class Breadcrumbs
         capsule.transform.SetParent(parent, false);
         capsule.transform.localScale = new Vector3(0.05f, 0.09f, 0.05f);
         var renderer = capsule.GetComponent<Renderer>();
-        if (renderer != null) renderer.material = new Material(Shader.Find("Unlit/Color")) { color = MarkerColor };
+        if (renderer == null) return;
+        // Shader.Find returns null when the build doesn't ship the shader; a Material can't be made
+        // from that, and the throw would skip the marker's light. Tint the capsule's own material then.
+        var shader = Shader.Find("Unlit/Color");
+        if (shader != null) renderer.material = new Material(shader) { color = MarkerColor };
+        else renderer.material.color = MarkerColor;
     }
 }
 
