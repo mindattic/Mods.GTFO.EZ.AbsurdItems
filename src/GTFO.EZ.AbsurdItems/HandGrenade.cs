@@ -231,11 +231,21 @@ internal static class HandGrenade
     {
         try
         {
-            if (!IsOurs(data) || __instance.GetComponent<HandGrenadeFuse>() != null) return;
+            var existing = __instance.GetComponent<HandGrenadeFuse>();
+            if (!IsOurs(data))
+            {
+                // GAI-T32: a reused (pooled) instance that was a Hand Grenade before is a plain
+                // glowstick now: drop the fuse so it can't blow up, and our model so it looks like one.
+                if (existing != null) Unarm(__instance, existing);
+                return;
+            }
             __instance.enabled = false; // no glow fading in and out
             if (__instance.m_light != null) __instance.m_light.enabled = false;
             Reskin(__instance.gameObject);
-            __instance.gameObject.AddComponent<HandGrenadeFuse>();
+            // GAI-T32: a reused instance keeps its old fuse (already exploded): re-arm it from zero
+            // instead of leaving the new throw without a working fuse.
+            if (existing != null) existing.Rearm();
+            else __instance.gameObject.AddComponent<HandGrenadeFuse>();
         }
         catch (Exception e)
         {
@@ -243,7 +253,26 @@ internal static class HandGrenade
         }
     }
 
-    private const string ModelName = "GTFO.EZ.AbsurdItems Hand Grenade Model";
+    internal const string ModelName = "GTFO.EZ.AbsurdItems Hand Grenade Model";
+
+    // GAI-T32: undoes AfterInstanceSetup on an instance reused as a plain glowstick.
+    private static void Unarm(GlowstickInstance instance, HandGrenadeFuse fuse)
+    {
+        fuse.enabled = false;
+        UnityEngine.Object.Destroy(fuse);
+        var model = instance.transform.Find(ModelName);
+        if (model != null)
+        {
+            model.gameObject.SetActive(false);
+            UnityEngine.Object.Destroy(model.gameObject);
+        }
+        var blink = instance.transform.Find(HandGrenadeFuse.BlinkName);
+        if (blink != null) UnityEngine.Object.Destroy(blink.gameObject);
+        foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
+            if (model == null || !renderer.transform.IsChildOf(model)) renderer.enabled = true;
+        instance.enabled = true;
+        if (instance.m_light != null) instance.m_light.enabled = true;
+    }
 
     // Hides every renderer and light already on `go` and adds the lock melter's meshes, on the
     // same layer (the first-person item has its own).
@@ -264,21 +293,53 @@ internal static class HandGrenade
 /// <summary>
 /// A thrown Hand Grenade's fuse: blinks red faster and faster, then blows. The thrower's game (or
 /// the host's, if the item has no owner) deals the damage, through the bullet path so it syncs;
-/// every game shows the blast. The host then despawns the item.
+/// every game shows the blast. The host then despawns the item - at once when it threw it itself,
+/// otherwise a short grace later (GAI-T32), so a client thrower whose fuse started a little after the
+/// host's still gets to deal its blast before the despawn reaches it.
 /// </summary>
 internal sealed class HandGrenadeFuse : MonoBehaviour
 {
     private static readonly Color FlashColor = new(1f, 0.05f, 0.05f, 1f);
+    internal const string BlinkName = "Blink";
+
+    // GAI-T32: how long the host keeps a client-thrown grenade (hidden) after its own fuse before
+    // despawning it, covering the spawn/sync delay between the host's fuse and the thrower's.
+    private const float RemoteThrowerDespawnGraceSeconds = 1.5f;
 
     private float age, nextFlash;
+    private float despawnAt = -1f;
     private bool exploded, lit;
     private EffectLight? blink;
 
     public HandGrenadeFuse(IntPtr ptr) : base(ptr) { }
 
+    // GAI-T32: a reused instance thrown again starts a fresh fuse.
+    [HideFromIl2Cpp]
+    internal void Rearm()
+    {
+        age = 0f;
+        nextFlash = 0f;
+        despawnAt = -1f;
+        exploded = false;
+        lit = false;
+        if (blink != null) blink.Intensity = 0f;
+        var model = transform.Find(HandGrenade.ModelName);
+        if (model != null) model.gameObject.SetActive(true);
+    }
+
     private void Update()
     {
-        if (exploded) return;
+        if (exploded)
+        {
+            if (despawnAt < 0f) return;
+            age += Time.deltaTime;
+            if (age >= despawnAt)
+            {
+                despawnAt = -1f;
+                Despawn();
+            }
+            return;
+        }
         try
         {
             age += Time.deltaTime;
@@ -291,7 +352,7 @@ internal sealed class HandGrenadeFuse : MonoBehaviour
 
             if (blink == null)
             {
-                var lightObject = new GameObject("Blink");
+                var lightObject = new GameObject(BlinkName);
                 lightObject.transform.SetParent(transform, false);
                 blink = lightObject.AddComponent<EffectLight>();
                 blink.Color = FlashColor;
@@ -341,7 +402,32 @@ internal sealed class HandGrenadeFuse : MonoBehaviour
             Plugin.Logger.LogError($"GTFO.EZ.AbsurdItems Hand Grenade blast failed: {e.Message}");
         }
 
-        // Gone: the host despawns the synced item for everyone; until that arrives it's hidden here.
+        // GAI-T32: on the host, a grenade a client threw waits (hidden) for the thrower's own fuse
+        // before the despawn, which would otherwise remove it there before its blast damage lands.
+        try
+        {
+            var owner = item != null ? item.Owner : null;
+            if (SNet.IsMaster && owner != null && !owner.IsLocallyOwned)
+            {
+                if (blink != null) blink.Intensity = 0f;
+                var model = transform.Find(HandGrenade.ModelName);
+                if (model != null) model.gameObject.SetActive(false);
+                despawnAt = age + RemoteThrowerDespawnGraceSeconds;
+                return;
+            }
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.EZ.AbsurdItems couldn't hold a client's Hand Grenade for its thrower: {e.Message}");
+        }
+        Despawn();
+    }
+
+    // Gone: the host despawns the synced item for everyone; until that arrives it's hidden here.
+    [HideFromIl2Cpp]
+    private void Despawn()
+    {
+        var item = GetComponent<Item>();
         try
         {
             var replicator = item?.ReplicationWrapper?.Replicator;
