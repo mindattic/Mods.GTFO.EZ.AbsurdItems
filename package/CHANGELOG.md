@@ -1,5 +1,11 @@
 # Changelog
 
+## v20
+
+- Bumps the `BepInExPack_GTFO` dependency to 3.2.4.
+- Moves in step with the GTFO.EZ family's version number (GTFO.EZ, GTFO.EZ.AbsurdWeapons,
+  GTFO.EZ.AbsurdMoves and GTFO.EZ.AbsurdItems share one).
+
 ## v19
 
 - Exhaustive bug-hunt pass over kit loot, Loot Mix (Hand Grenades/Stim Packs), the out-in-the-open
