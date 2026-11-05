@@ -217,7 +217,7 @@ Thunderstore requires `manifest.json`'s `version_number` to be strict `x.y.z`, s
 The GTFO.EZ family - GTFO.EZ, GTFO.EZ.AbsurdWeapons, GTFO.EZ.AbsurdMoves and GTFO.EZ.AbsurdItems -
 shares one version number, so a matching set is easy to spot: the companions' first release is
 **v13**, in step with GTFO.EZ (not v1), and every release of the family bumps all four together
-(current: v19).
+(current: v20).
 
 ## Building
 
