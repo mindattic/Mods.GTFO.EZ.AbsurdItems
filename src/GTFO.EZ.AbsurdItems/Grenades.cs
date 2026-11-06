@@ -176,7 +176,7 @@ internal static class Grenades
             var type = Of(item?.ItemDataBlock);
             if (item == null || type == null) return;
 
-            var count = Formulas.GrenadePickupCount(seed, type.PickupMin.Value, type.PickupMax.Value);
+            var count = Formulas.GrenadePickupCount(seed, HostLevelSettings.Effective(type.PickupMin), HostLevelSettings.Effective(type.PickupMax));
             var custom = item.GetCustomData();
             if (custom.ammo == count) return;
             custom.ammo = count;
@@ -193,6 +193,32 @@ internal static class Grenades
     // ---- The items: the glowstick's, cloned. After GTFO.EZ's datablock tweaks. ----
 
     private static readonly bool[] added = new bool[2];
+
+    // The game's own roll stays in range; SetPickupCount then settles each pickup on a whole count.
+    // Effective: the host's PickupCountMin/Max in someone else's lobby (GAI-T40).
+    private static void SetPickupRange(ItemDataBlock item, GrenadeType type)
+    {
+        item.ConsumableAmmoMin = Mathf.Max(1, HostLevelSettings.Effective(type.PickupMin));
+        item.ConsumableAmmoMax = Mathf.Max(item.ConsumableAmmoMin, HostLevelSettings.Effective(type.PickupMax));
+    }
+
+    // The host's pickup counts arrived (or were dropped): the registered items' ranges follow.
+    internal static void RefreshPickupRanges()
+    {
+        foreach (var type in All)
+        {
+            try
+            {
+                if (!added[(int)type.Kind]) continue;
+                var item = GameDataBlockBase<ItemDataBlock>.GetBlock(type.ItemId);
+                if (item != null) SetPickupRange(item, type);
+            }
+            catch (Exception e)
+            {
+                Plugin.Logger.LogWarning($"GTFO.EZ.AbsurdItems couldn't update the {type.Name}'s pickup range: {e.Message}");
+            }
+        }
+    }
 
     [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
     [HarmonyPostfix]
@@ -228,9 +254,7 @@ internal static class Grenades
             // Its own terminal names too, or LIST/QUERY/PING would show it as a glow stick.
             item.terminalItemLongName = new LocalizedText { Id = 0, UntranslatedText = type.Name };
             item.terminalItemShortName = type.TerminalShortName;
-            // The game's own roll stays in range; SetPickupCount then settles each pickup on a whole count.
-            item.ConsumableAmmoMin = Mathf.Max(1, type.PickupMin.Value);
-            item.ConsumableAmmoMax = Mathf.Max(item.ConsumableAmmoMin, type.PickupMax.Value);
+            SetPickupRange(item, type);
             GameDataBlockBase<ItemDataBlock>.AddBlock(item, -1);
             added[(int)type.Kind] = true;
             Plugin.Logger.LogInfo($"GTFO.EZ.AbsurdItems added the {type.Name} (consumable; item id {type.ItemId}, cloned from '{source.name}' {source.persistentID}).");

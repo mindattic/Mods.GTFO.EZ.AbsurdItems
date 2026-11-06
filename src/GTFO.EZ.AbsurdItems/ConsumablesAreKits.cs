@@ -85,7 +85,9 @@ internal static class ConsumablesAreKits
 
     // After GTFO.EZ's tweaks: its consumable spawn multiplier sets the tables' sizes and its
     // expedition balance the resource budget the kit count follows. Without it, this runs alone.
-    // Low priority: after the grenades and the Stim Pack have registered their items.
+    // Low priority: after the grenades and the Stim Pack have registered their items. Every setting is
+    // read through HostLevelSettings (GAI-T40): the host's in someone else's lobby, where GTFO.EZ runs
+    // this again with them before the level is built.
     [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
     [HarmonyPostfix]
     [HarmonyAfter(Plugin.GtfoEzGuid)]
@@ -94,30 +96,30 @@ internal static class ConsumablesAreKits
     {
         try
         {
-            if (!Enabled.Value) return;
+            if (!HostLevelSettings.Effective(Enabled)) return;
 
             var settings = new KitLootSettings
             {
                 LogName = "Consumables Are Kits",
-                LootPercent = KitLootPercent.Value,
-                MinCharges = KitChargesMin.Value,
-                MaxCharges = KitChargesMax.Value,
-                HealthWeight = HealthKitWeight.Value,
-                ToolWeight = ToolKitWeight.Value,
-                AmmoWeight = AmmoKitWeight.Value,
+                LootPercent = HostLevelSettings.Effective(KitLootPercent),
+                MinCharges = HostLevelSettings.Effective(KitChargesMin),
+                MaxCharges = HostLevelSettings.Effective(KitChargesMax),
+                HealthWeight = HostLevelSettings.Effective(HealthKitWeight),
+                ToolWeight = HostLevelSettings.Effective(ToolKitWeight),
+                AmmoWeight = HostLevelSettings.Effective(AmmoKitWeight),
             };
 
-            if (!LootMixEnabled.Value)
+            if (!HostLevelSettings.Effective(LootMixEnabled))
             {
                 KitLoot.Fill(settings);
                 return;
             }
 
-            if (Grenades.Frag.Enabled.Value) AddExtra(settings.Extras, Grenades.Frag.ItemId, FragGrenadeWeight, Grenades.Frag.Name);
-            if (Grenades.Plasma.Enabled.Value) AddExtra(settings.Extras, Grenades.Plasma.ItemId, PlasmaGrenadeWeight, Grenades.Plasma.Name);
-            if (StimPack.Enabled.Value) AddExtra(settings.Extras, StimPack.ItemId, StimPackWeight, "Stim Pack");
+            if (HostLevelSettings.Effective(Grenades.Frag.Enabled)) AddExtra(settings.Extras, Grenades.Frag.ItemId, FragGrenadeWeight, Grenades.Frag.Name);
+            if (HostLevelSettings.Effective(Grenades.Plasma.Enabled)) AddExtra(settings.Extras, Grenades.Plasma.ItemId, PlasmaGrenadeWeight, Grenades.Plasma.Name);
+            if (HostLevelSettings.Effective(StimPack.Enabled)) AddExtra(settings.Extras, StimPack.ItemId, StimPackWeight, "Stim Pack");
 
-            var inBoxes = 1f - Mathf.Clamp01(OutInTheOpenShare.Value);
+            var inBoxes = 1f - Mathf.Clamp01(HostLevelSettings.Effective(OutInTheOpenShare));
             var tables = KitLoot.Fill(settings, block => block.ChanceToSpawnInResourceContainer = inBoxes);
             Plugin.Logger.LogInfo($"Loot Mix: {tables} table(s), {1f - inBoxes:P0} out in the open.");
         }
@@ -130,6 +132,6 @@ internal static class ConsumablesAreKits
     private static void AddExtra(List<(uint Id, float Weight)> into, uint id, ConfigEntry<float> weight, string what)
     {
         if (!GameDataBlockBase<ItemDataBlock>.HasBlock(id)) Plugin.Logger.LogWarning($"Loot Mix: no {what} item found - left out of the loot.");
-        else if (weight.Value > 0f) into.Add((id, weight.Value));
+        else if (HostLevelSettings.Effective(weight) is var w && w > 0f) into.Add((id, w));
     }
 }

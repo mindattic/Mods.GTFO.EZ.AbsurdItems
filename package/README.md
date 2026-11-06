@@ -86,7 +86,7 @@ Consumables found in lockers, boxes or lying around are the game's own health, t
 as small kits of 1 or 2 charges (one charge is one use, 20% of a pack), and sparse: together they
 add about 20% (*Kit Loot*) to the zone's normal resource packs, which spawn as usual. The split
 between health, ammo and tool kits follows the zone's own resource budget. Turn it off for vanilla
-consumables (and no Loot Mix). The host's settings decide what spawns.
+consumables (and no Loot Mix). The host's settings decide what spawns (see Compatibility).
 
 With **GTFO.EZ** installed, its data changes (consumable spawn multiplier, resource budget) apply
 first, and its own consumable spawn odds are skipped while this is on.
@@ -247,6 +247,12 @@ twice.
 - **GTFO.EZ.AbsurdWeapons' Shadow Dagger** patches the same four enemy-targeting methods the Plasma
   Grenade's panic does (each only ever turns a target away); the panic's patches are pinned after
   it.
+- **Multiplayer, with GTFO.EZ:** the settings that shape the level - all of `[Loot]` (kit loot and Loot
+  Mix), `Frag Grenade Enabled` / `Plasma Grenade Enabled` / `Stim Pack Enabled` and the grenades'
+  `PickupCountMin` / `PickupCountMax` - follow the host: in someone else's lobby your game uses the
+  host's values (sent by GTFO.EZ's level-settings sync) before the level is built, so everyone's loot
+  and pickup counts match, and your `.cfg` is left as it is. Without GTFO.EZ, or with a host whose
+  GTFO.EZ doesn't send them, your own values are used.
 - **Turning a mod off:** every GTFO.* mod's `.cfg` starts with `[0. Mod] Enabled`; a mod switched
   off there counts as not installed for the others sharing its code.
 - Artifact buffs are confirmed in play. Muted scales the game's per-player detection modifier
@@ -278,6 +284,7 @@ src/GTFO.EZ.AbsurdItems/
   StimPack.cs            Stim Pack consumable: I2-LP clone, overheal, damage boost
   Blast.cs               The grenades' explosion, area damage, padlock damage, model and flash
   Sounds.cs              The grenades' [Sounds] events
+  HostLevelSettings.cs   The host's level settings in someone else's lobby (filled by GTFO.EZ)
   ConfigImport.cs        Carries moved settings over from GTFO.EZ's and GTFO.EZ.AbsurdWeapons' cfgs, once
   DataBlocks.cs          Datablock cloning
   Pure/Formulas.cs       The items' numbers (no game types; unit tested)

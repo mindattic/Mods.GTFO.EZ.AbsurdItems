@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Loot settings follow the host (GAI-T40).** With GTFO.EZ installed, everything here that shapes
+  the level - `[Loot]` (Consumables Are Kits, Kit Loot, the kit weights and charges, Loot Mix, the
+  grenade/Stim Pack weights, OutInTheOpenShare), the Frag Grenade / Plasma Grenade / Stim Pack
+  switches and the grenades' pickup counts - is the host's in someone else's lobby, so a client's
+  consumable tables and grenade pickups match the host's instead of following its own `.cfg` (which
+  is left untouched). GTFO.EZ sends them with its own level settings and runs the kit loot again
+  with them before the level is built. Without GTFO.EZ your own values are used, as before.
+
 - **The Hand Grenade is now two Halo 3 grenades, thrown instantly (GAI-T37).** Press fire and it's
   thrown at once - no wind-up - along your aim at Halo 3's speed (10 world units/s = 30.5 m/s, at
   1 wu = 3.048 m) under its own 90%-of-Halo gravity (about 11.4 m/s2), flown on Halo's 30 Hz tick so
