@@ -147,7 +147,7 @@ HAND_GRENADE), not glow sticks.
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Hand Grenade Enabled` | true | Adds the Hand Grenade at all (takes effect on restart). Off: not added, and not in the loot. |
+| `Hand Grenade Enabled` | true | Whether the Hand Grenade spawns at all (takes effect on restart). Off: not in the loot. The item is registered either way, so everyone in a lobby holds the same items. |
 | `FuseSeconds` | 3 | Seconds from the throw until it explodes. |
 | `ThrowForceMultiplier` | 2 | Multiplies the glowstick's own throw strength. |
 | `BlastRadius` | 6 | Metres the blast reaches. |
@@ -178,7 +178,7 @@ health, so a Bold artifact's bonus survives it. Found as loot (see [Loot mix](#l
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Stim Pack Enabled` | true | Adds the Stim Pack at all (takes effect on restart). Off: not added, and not in the loot. |
+| `Stim Pack Enabled` | true | Whether the Stim Pack spawns at all (takes effect on restart). Off: not in the loot. The item is registered either way, so everyone in a lobby holds the same items. |
 | `HealPercent` | 33 | Health a Stim Pack gives, in percent of max health. |
 | `MaxHealthPercent` | 200 | How high it can take your health, in percent of max health. |
 | `DrainPercentPerSecond` | 1 | How fast health above max drains back to max, in percent of max a second. |

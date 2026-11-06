@@ -43,7 +43,7 @@ internal static class HandGrenade
     internal static void Bind(ConfigFile config)
     {
         Enabled = config.Bind("Hand Grenade", "Hand Grenade Enabled", true,
-            "Adds the Hand Grenade (the glowstick's item, cloned) at all. It only spawns as loot through [Loot] Loot Mix Enabled, which adds it to the kit loot (Consumables Are Kits). Takes effect on restart.");
+            "Lets the Hand Grenade (the glowstick's item, cloned) spawn at all. It only spawns as loot through [Loot] Loot Mix Enabled, which adds it to the kit loot (Consumables Are Kits). Off: none spawn (the item is still registered, so lobbies agree on it). Takes effect on restart.");
         FuseSeconds = NonNegative.Bind(config, "Hand Grenade", "FuseSeconds", 3f, "Seconds from the throw until it explodes.");
         BlastRadius = NonNegative.Bind(config, "Hand Grenade", "BlastRadius", 6f, "Metres the blast reaches.");
         BlastDamage = NonNegative.Bind(config, "Hand Grenade", "BlastDamage", 60f, "Damage at the blast's center, before damage boosts (Aggressive artifacts, a Stim Pack).");
@@ -138,11 +138,8 @@ internal static class HandGrenade
     {
         try
         {
-            if (!Enabled.Value)
-            {
-                Plugin.Logger.LogInfo("GTFO.EZ.AbsurdItems: Hand Grenade disabled in the config - not adding it.");
-                return;
-            }
+            // Registered whatever Hand Grenade Enabled says (GAI-T39, G.EZ-T125): every machine in a
+            // lobby then holds the same items; Enabled only decides whether it spawns (Loot Mix).
             if (GameDataBlockBase<ItemDataBlock>.HasBlock(ItemId))
             {
                 if (!added) Plugin.Logger.LogError($"GTFO.EZ.AbsurdItems: item id {ItemId} is already taken by another mod's datablock - not adding the Hand Grenade.");

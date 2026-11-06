@@ -42,7 +42,7 @@ internal static class StimPack
     internal static void Bind(ConfigFile config)
     {
         Enabled = config.Bind("Stim Pack", "Stim Pack Enabled", true,
-            "Adds the Stim Pack, a consumable of its own (the I2-LP is left as it is). Takes effect on restart.");
+            "Lets the Stim Pack, a consumable of its own (the I2-LP is left as it is), spawn through Loot Mix. Off: none spawn (the item is still registered, so lobbies agree on it). Takes effect on restart.");
         HealPercent = NonNegative.Bind(config, "Stim Pack", "HealPercent", 33f, "Health a Stim Pack gives, as a percent of max health.");
         MaxHealthPercent = NonNegative.Bind(config, "Stim Pack", "MaxHealthPercent", 200f, "How high a Stim Pack can take your health, as a percent of max health.");
         DrainPercentPerSecond = NonNegative.Bind(config, "Stim Pack", "DrainPercentPerSecond", 1f, "How fast health above max drains back down to max, in percent of max health per second.");
@@ -84,7 +84,9 @@ internal static class StimPack
     {
         try
         {
-            if (!Enabled.Value || GameDataBlockBase<ItemDataBlock>.HasBlock(ItemId)) return;
+            // Registered whatever Stim Pack Enabled says (GAI-T39, G.EZ-T125): every machine in a lobby
+            // then holds the same items; Enabled only decides whether it spawns (Loot Mix).
+            if (GameDataBlockBase<ItemDataBlock>.HasBlock(ItemId)) return;
             var source = GameDataBlockBase<ItemDataBlock>.GetBlock(SourceItemId);
             if (source == null)
             {

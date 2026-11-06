@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Bug fix (GAI-T39, for GTFO.EZ's G.EZ-T125 level-settings sync):** switching the Hand Grenade or
+  Stim Pack off used to skip registering its item, so a host and a client with different switches
+  held different items - a level could hold a pickup the other game had never heard of. Both items
+  are now always registered; `Hand Grenade Enabled` / `Stim Pack Enabled` only decide whether they
+  spawn. GTFO.EZ's next release also warns in the event log when your AbsurdItems level
+  settings ([Loot], Hand Grenade pickup counts, these switches) differ from the host's.
 - **Artifact pickups are announced to the whole team.** Every player's event log says who picked up
   what and what it gave ("Bob picked up a Bold artifact: +5% max health, Bold x3"), then the team's
   tally ("Team artifacts - Bob: Bold 3 | Amy: Aggressive 1, Muted 2").
