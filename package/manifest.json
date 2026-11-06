@@ -1,6 +1,6 @@
 {
   "name": "GtfoEZAbsurdItems",
-  "version_number": "20.0.0",
+  "version_number": "21.0.0",
   "website_url": "https://github.com/mindattic/GTFO.EZ.AbsurdItems",
   "description": "GTFO.EZ companion: artifacts buff whoever picks them up, Halo 3 Frag and sticky Plasma Grenades (thrown instantly), an overheal Stim Pack, and loot is a few small kits plus grenades and stims. Every feature toggles on/off.",
   "dependencies": [

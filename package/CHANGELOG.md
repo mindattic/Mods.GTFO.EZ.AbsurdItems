@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 21.0.0
 
 - **Loot settings follow the host (GAI-T40).** With GTFO.EZ installed, everything here that shapes
   the level - `[Loot]` (Consumables Are Kits, Kit Loot, the kit weights and charges, Loot Mix, the
