@@ -13,24 +13,29 @@ namespace GTFO.EZ.AbsurdItems;
 /// moved key that isn't in this mod's .cfg yet is copied once from the old file (read as text: those
 /// mods no longer bind the keys, and their files keep them as orphaned lines). A key already in this
 /// mod's .cfg is never touched, so this only ever runs once per key.
+/// GAI-T37: the Hand Grenade became the Frag and Plasma Grenades, so its settings - in this mod's own
+/// .cfg, or still in GTFO.EZ.AbsurdWeapons' - seed both new sections the same once-per-key way.
 /// </summary>
 internal static class ConfigImport
 {
     private const string EzFile = "MindAttic.GTFO.EZ.cfg";
     private const string AbsurdWeaponsFile = "MindAttic.GTFO.EZ.AbsurdWeapons.cfg";
 
-    // The (section, key) pairs in this mod's .cfg before anything was bound this run.
+    // The (section, key) pairs in this mod's .cfg before anything was bound this run, and their values.
     private static HashSet<(string, string)> existing = new();
+    private static Dictionary<(string, string), string> own = new();
 
     internal static void Snapshot(ConfigFile config)
     {
         try
         {
-            existing = File.Exists(config.ConfigFilePath) ? Keys(Read(config.ConfigFilePath)) : new();
+            own = File.Exists(config.ConfigFilePath) ? Read(config.ConfigFilePath) : new();
+            existing = Keys(own);
         }
         catch (Exception e)
         {
             Plugin.Logger.LogWarning($"Config import: couldn't read this mod's own config. {e.Message}");
+            own = new();
             existing = new();
         }
     }
@@ -42,12 +47,18 @@ internal static class ConfigImport
         {
             var ez = ReadOld(EzFile);
             var aw = ReadOld(AbsurdWeaponsFile);
-            if (ez.Count == 0 && aw.Count == 0) return;
+            if (ez.Count == 0 && aw.Count == 0 && own.Count == 0) return;
 
             var imported = 0;
-            void Copy(Dictionary<(string, string), string> from, string file, string fromSection, string fromKey, string section, string key)
+            void Copy(Dictionary<(string, string), string> from, string file, string fromSection, string fromKey, string section, string key,
+                Func<float, float>? scale = null)
             {
                 if (existing.Contains((section, key)) || !from.TryGetValue((fromSection, fromKey), out var value)) return;
+                if (scale != null)
+                {
+                    if (!float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number)) return;
+                    value = scale(number).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                }
                 if (!TryGetAny(config, section, key, out var entry) || entry == null) return;
                 var before = entry.GetSerializedValue();
                 entry.SetSerializedValue(value);
@@ -62,16 +73,33 @@ internal static class ConfigImport
             foreach (var key in new[] { "Artifact Buffs Enabled", "Bold: Max Health (%)", "Aggressive: Damage (%)", "Muted: Quieter (%)" })
                 Copy(ez, EzFile, "Artifacts", key, "Artifacts", key);
 
-            // GTFO.EZ.AbsurdWeapons: the Hand Grenade, the Stim Pack, their sounds and Loot Mix's own keys.
-            foreach (var key in new[] { "Hand Grenade Enabled", "FuseSeconds", "BlastRadius", "BlastDamage", "BlastEdgeFraction",
-                         "BlastStagger", "MaxCarried", "ThrowForceMultiplier" })
-                Copy(aw, AbsurdWeaponsFile, "Hand Grenade", key, "Hand Grenade", key);
+            // GAI-T37: the old Hand Grenade's settings - this mod's own, or else GTFO.EZ.AbsurdWeapons' - seed
+            // both grenades. Its fuse, radius, edge share and throw strength aren't carried over: Halo's
+            // values replace them. The plasma's damage keeps Halo's ratio to the frag's.
+            var hand = new Dictionary<(string, string), string>();
+            foreach (var pair in aw) if (pair.Key.Item1 == "Hand Grenade" || pair.Key == ("Loot", "HandGrenadeWeight")) hand[pair.Key] = pair.Value;
+            foreach (var pair in own) if (pair.Key.Item1 == "Hand Grenade" || pair.Key == ("Loot", "HandGrenadeWeight")) hand[pair.Key] = pair.Value;
+            var handFile = "the old Hand Grenade settings";
+            Copy(hand, handFile, "Hand Grenade", "Hand Grenade Enabled", "Frag Grenade", "Frag Grenade Enabled");
+            Copy(hand, handFile, "Hand Grenade", "Hand Grenade Enabled", "Plasma Grenade", "Plasma Grenade Enabled");
+            foreach (var key in new[] { "MaxCarried", "PickupCountMin", "PickupCountMax", "BlastStagger" })
+            {
+                Copy(hand, handFile, "Hand Grenade", key, "Frag Grenade", key);
+                Copy(hand, handFile, "Hand Grenade", key, "Plasma Grenade", key);
+            }
+            Copy(hand, handFile, "Hand Grenade", "BlastDamage", "Frag Grenade", "BlastDamage");
+            Copy(hand, handFile, "Hand Grenade", "BlastDamage", "Plasma Grenade", "BlastDamage", d => d * HaloGrenades.PlasmaToFragDamage);
+            Copy(hand, handFile, "Hand Grenade", "BlastDamage", "Plasma Grenade", "StuckDamage", d => d * HaloGrenades.PlasmaAttachedToFragDamage);
+            Copy(hand, handFile, "Loot", "HandGrenadeWeight", "Loot", "FragGrenadeWeight", w => w / 2f);
+            Copy(hand, handFile, "Loot", "HandGrenadeWeight", "Loot", "PlasmaGrenadeWeight", w => w / 2f);
+
+            // GTFO.EZ.AbsurdWeapons: the Stim Pack, the sounds and Loot Mix's own keys.
             foreach (var key in new[] { "Stim Pack Enabled", "HealPercent", "MaxHealthPercent", "DrainPercentPerSecond",
                          "DamageBoostPercent", "DamageBoostSeconds" })
                 Copy(aw, AbsurdWeaponsFile, "Stim Pack", key, "Stim Pack", key);
             foreach (var key in new[] { "HandGrenadeThrow", "HandGrenadeBounce" })
                 Copy(aw, AbsurdWeaponsFile, "Sounds", key, "Sounds", key);
-            foreach (var key in new[] { "Loot Mix Enabled", "HandGrenadeWeight", "StimPackWeight", "OutInTheOpenShare" })
+            foreach (var key in new[] { "Loot Mix Enabled", "StimPackWeight", "OutInTheOpenShare" })
                 Copy(aw, AbsurdWeaponsFile, "Loot", key, "Loot", key);
 
             // The kit settings both mods had: whichever decided the loot. With AbsurdWeapons' Loot Mix

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace GTFO.EZ.AbsurdItems;
 
 /// <summary>
-/// The Hand Grenade's sounds, picked from the game's own Wwise events. Each is a config entry
+/// The grenades' sounds, picked from the game's own Wwise events. Each is a config entry
 /// holding the event's name (<c>[Sounds]</c>; empty = silent), so they can be re-picked without a
 /// rebuild. Events with "2D" in the name are first-person only, so they play for the local player alone.
 /// </summary>
@@ -18,8 +18,8 @@ internal static class Sounds
     internal static void Bind(ConfigFile config)
     {
         const string s = "Sounds";
-        HandGrenadeThrow = config.Bind(s, "HandGrenadeThrow", "FRAGGRENADETHROW", "Throwing a Hand Grenade (instead of the glowstick's toss).");
-        HandGrenadeBounce = config.Bind(s, "HandGrenadeBounce", "FRAGGRENADEBOUNCE", "A Hand Grenade bouncing (instead of the glowstick's clatter).");
+        HandGrenadeThrow = config.Bind(s, "HandGrenadeThrow", "FRAGGRENADETHROW", "Throwing a Frag or Plasma Grenade (instead of the glowstick's toss). (The key keeps the old Hand Grenade's name.)");
+        HandGrenadeBounce = config.Bind(s, "HandGrenadeBounce", "FRAGGRENADEBOUNCE", "A Frag Grenade bouncing, or a Plasma Grenade sticking (instead of the glowstick's clatter).");
     }
 
     // `local`: whether the event's source is the local player (a "2D" event only plays for them).

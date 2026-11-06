@@ -2,7 +2,7 @@
   "name": "GtfoEZAbsurdItems",
   "version_number": "20.0.0",
   "website_url": "https://github.com/mindattic/GTFO.EZ.AbsurdItems",
-  "description": "GTFO.EZ companion: artifacts buff whoever picks them up for the level, the Hand Grenade and the Stim Pack (overheal and damage boost), and loot is a few small health, tool and ammo kits plus grenades and stims. Every feature toggles on/off.",
+  "description": "GTFO.EZ companion: artifacts buff whoever picks them up, Halo 3 Frag and sticky Plasma Grenades (thrown instantly), an overheal Stim Pack, and loot is a few small kits plus grenades and stims. Every feature toggles on/off.",
   "dependencies": [
     "BepInEx-BepInExPack_GTFO-3.2.4"
   ]

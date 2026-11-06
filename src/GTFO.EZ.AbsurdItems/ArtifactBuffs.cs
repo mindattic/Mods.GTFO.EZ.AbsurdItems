@@ -39,7 +39,7 @@ internal static class ArtifactBuffs
             "Max health added per Bold artifact picked up, in percent of your starting max health (the gain is healed too). Default 5.");
 
         AggressiveDamagePercent = NonNegative.Bind(config, s, "Aggressive: Damage (%)", 5f,
-            "Damage dealt to enemies (guns, melee and Hand Grenades) added per Aggressive artifact picked up. Default 5.");
+            "Damage dealt to enemies (guns, melee and grenades) added per Aggressive artifact picked up. Default 5.");
 
         MutedQuieterPercent = NonNegative.Bind(config, s, "Muted: Quieter (%)", 5f,
             "How much harder enemies find it to detect you, per Muted artifact picked up (capped at 75%). Default 5.");

@@ -10,6 +10,7 @@ namespace GTFO.EZ.AbsurdItems;
 
 [BepInPlugin(GUID, NAME, VERSION)]
 [BepInProcess("GTFO.exe")]
+[BepInDependency("dev.gtfomodding.gtfo-api")] // the grenades' throws, sticks and blasts reach teammates through it (GAI-T37)
 [BepInDependency(GtfoEzGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BasePlugin
 {
@@ -43,17 +44,19 @@ public class Plugin : BasePlugin
         ArtifactGlow.Bind(Config);
         Breadcrumbs.Bind(Config);
         ConsumablesAreKits.Bind(Config);
-        HandGrenade.Bind(Config);
+        Grenades.Bind(Config);
         StimPack.Bind(Config);
         Sounds.Bind(Config);
         ConfigImport.Apply(Config); // after every Bind: values from GTFO.EZ's / GTFO.EZ.AbsurdWeapons' cfgs, once
         ApplyDefaultMigrations(); // after the import, so an imported old default moves on too
         ClassInjector.RegisterTypeInIl2Cpp<BurstFlash>();
-        ClassInjector.RegisterTypeInIl2Cpp<HandGrenadeFuse>();
+        ClassInjector.RegisterTypeInIl2Cpp<GlowstickGrenadeFuse>();
+        ClassInjector.RegisterTypeInIl2Cpp<HaloGrenade>();
         ClassInjector.RegisterTypeInIl2Cpp<ArtifactGlow>();
 
         new Harmony(GUID).PatchAll();
-        AddComponent<HandGrenadeSupply>();
+        HaloGrenade.Init();
+        AddComponent<GrenadeSupply>();
         AddComponent<ArtifactGlow>();
 
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
@@ -66,7 +69,9 @@ public class Plugin : BasePlugin
     // sets it back afterwards keeps their value.
     private static readonly (int Version, Func<ConfigEntry<int>> Entry, int OldDefault)[] IntDefaultMigrations =
     {
-        (1, () => HandGrenade.MaxCarried, 6), // GAI-T36: carry up to 20 Hand Grenades
+        // GAI-T36: carry up to 20 (the Hand Grenade's, carried over to both grenades by ConfigImport, GAI-T37)
+        (1, () => Grenades.Frag.MaxCarried, 6),
+        (1, () => Grenades.Plasma.MaxCarried, 6),
     };
 
     private void ApplyDefaultMigrations()

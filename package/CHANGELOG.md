@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- **The Hand Grenade is now two Halo 3 grenades, thrown instantly (GAI-T37).** Press fire and it's
+  thrown at once - no wind-up - along your aim at Halo 3's speed (10 world units/s = 30.5 m/s, at
+  1 wu = 3.048 m) under its own 90%-of-Halo gravity (about 11.4 m/s2), flown on Halo's 30 Hz tick so
+  every player sees the same path. The **Frag Grenade** bounces and goes off 0.5 s after its first
+  bounce off the ground (never before 1.3 s) - or the moment it hits an enemy. The **Plasma Grenade**
+  (blue core and glow) sticks to the first wall, floor or enemy it hits, riding along on that enemy,
+  and goes off 0.9 s after sticking (never before 1.3 s; `StuckFuseSeconds`). **An enemy with a
+  plasma stuck to it panics**: it stops attacking and chasing and runs away from the players, or
+  into its nearest friends - never at you (host-run, seen by all). Blasts follow Halo 3's falloff
+  (full to 1.5 m, down to its edge share at 5.3 m); Halo's base gravity, the bounce, the throw angle
+  and the time between throws are documented estimates (see the README). New `[Frag Grenade]` and
+  `[Plasma Grenade]` sections and `[Loot] FragGrenadeWeight` / `PlasmaGrenadeWeight` (2 each); your
+  `[Hand Grenade]` settings and `HandGrenadeWeight` seed them once, and its fuse, radius, edge share
+  and throw strength settings are gone. Throws, sticks and blasts reach teammates over GTFO-API.
+
 - **Bug fix (GAI-T39, for GTFO.EZ's G.EZ-T125 level-settings sync):** switching the Hand Grenade or
   Stim Pack off used to skip registering its item, so a host and a client with different switches
   held different items - a level could hold a pickup the other game had never heard of. Both items

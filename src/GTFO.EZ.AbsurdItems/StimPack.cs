@@ -25,7 +25,7 @@ namespace GTFO.EZ.AbsurdItems;
 [HarmonyPatch]
 internal static class StimPack
 {
-    // An ItemDataBlock id, next to the Hand Grenade's. Cloned from the I2-LP (140).
+    // An ItemDataBlock id, between the Frag Grenade's (1203) and the Plasma Grenade's (1205). Cloned from the I2-LP (140).
     internal const uint ItemId = 1204;
     private const uint SourceItemId = 140;
 
@@ -46,7 +46,7 @@ internal static class StimPack
         HealPercent = NonNegative.Bind(config, "Stim Pack", "HealPercent", 33f, "Health a Stim Pack gives, as a percent of max health.");
         MaxHealthPercent = NonNegative.Bind(config, "Stim Pack", "MaxHealthPercent", 200f, "How high a Stim Pack can take your health, as a percent of max health.");
         DrainPercentPerSecond = NonNegative.Bind(config, "Stim Pack", "DrainPercentPerSecond", 1f, "How fast health above max drains back down to max, in percent of max health per second.");
-        DamageBoostPercent = NonNegative.Bind(config, "Stim Pack", "DamageBoostPercent", 33f, "Extra damage dealt (guns, melee and Hand Grenades) while the Stim Pack's boost runs, in percent.");
+        DamageBoostPercent = NonNegative.Bind(config, "Stim Pack", "DamageBoostPercent", 33f, "Extra damage dealt (guns, melee and grenades) while the Stim Pack's boost runs, in percent.");
         DamageBoostSeconds = NonNegative.Bind(config, "Stim Pack", "DamageBoostSeconds", 15f, "How long the damage boost lasts after a Stim Pack.");
     }
 

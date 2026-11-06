@@ -10,20 +10,21 @@ using UnityEngine;
 
 namespace GTFO.EZ.AbsurdItems;
 
-// What the Hand Grenade's blast needs, ported from GTFO.EZ.AbsurdWeapons (where its grenade guns share
-// the same look, sound and damage).
+// What the Frag and Plasma Grenades' blasts need, ported from GTFO.EZ.AbsurdWeapons (where its grenade
+// guns share the same look, sound and damage).
 
-/// <summary>The blast's look and sound: the trip mine's explosion effect, a flash and the frag grenade bang.</summary>
+/// <summary>The blast's look and sound: the trip mine's explosion effect, a flash (orange for a frag, blue
+/// for a plasma) and the frag grenade bang.</summary>
 internal static class Explosion
 {
     private const string TripMineExplosion = "Assets/AssetPrefabs/FX_Effects/FX_Tripmine.prefab";
     private static FX_Pool? pool;
     private static bool effectFailed, effectLogged;
 
-    internal static void Show(Vector3 position)
+    internal static void Show(Vector3 position, GrenadeKind kind = GrenadeKind.Frag)
     {
         CellSound.Post(EVENTS.FRAGGRENADEEXPLODE, position);
-        BurstFlash.Spawn(position + Vector3.up * 0.3f, new Color(1f, 0.55f, 0.2f), 10f, 10f, 0.35f);
+        BurstFlash.Spawn(position + Vector3.up * 0.3f, kind == GrenadeKind.Plasma ? new Color(0.3f, 0.6f, 1f) : new Color(1f, 0.55f, 0.2f), 10f, 10f, 0.35f);
         if (effectFailed) return;
         try
         {
@@ -50,12 +51,14 @@ internal static class Explosion
 
 /// <summary>
 /// Damage and stagger to every living enemy within a radius that the center can see (not
-/// through walls), once each through its limb nearest the center, and to every door lock in it.
-/// Uses the bullet damage path, so it syncs; call it only on the attacker's own game.
+/// through walls), once each through its limb nearest the center, and to every door lock in it -
+/// full damage out to `innerRadius`, then falling linearly to `edgeDamageFraction` of it at `radius`
+/// (Halo's falloff, <see cref="HaloGrenades.Falloff"/>). Uses the bullet damage path, so it syncs;
+/// call it only on the attacker's own game.
 /// </summary>
 internal static class AreaDamage
 {
-    internal static void Apply(Vector3 center, float radius, float damage, float edgeDamageFraction, float staggerMulti,
+    internal static void Apply(Vector3 center, float innerRadius, float radius, float damage, float edgeDamageFraction, float staggerMulti,
         Agent source, uint gearCategoryId)
     {
         var nearestLimb = new Dictionary<IntPtr, (Dam_EnemyDamageLimb Limb, Vector3 Point, float Distance)>();
@@ -77,7 +80,7 @@ internal static class AreaDamage
         {
             if (Physics.Linecast(from, point, LayerManager.MASK_WORLD)) continue;
 
-            var falloff = Formulas.AreaFalloff(distance, radius, edgeDamageFraction);
+            var falloff = HaloGrenades.Falloff(distance, innerRadius, radius, edgeDamageFraction);
             var direction = (point - center).sqrMagnitude > 0.0001f ? (point - center).normalized : Vector3.up;
             limb.BulletDamage(damage * falloff, source, point, direction, -direction,
                 allowDirectionalBonus: false, staggerMulti, 1f, gearCategoryId);
@@ -117,7 +120,8 @@ internal static class LockDamage
     }
 }
 
-/// <summary>The lock melter's meshes, copied onto a Hand Grenade - just the look.</summary>
+/// <summary>The lock melter's meshes, copied onto a grenade - just the look. A Plasma Grenade also gets a
+/// glowing blue core and a blue light, so the two kinds tell apart in the hand, on the floor and in flight.</summary>
 internal static class GrenadeModel
 {
     private static readonly string[] LockMelterPrefabs =
@@ -131,7 +135,35 @@ internal static class GrenadeModel
 
     // None of the prefab's pickup or interaction scripts come along. Falls back to a plain capsule
     // if the prefab isn't loaded.
-    internal static void Build(Transform parent)
+    internal static void Build(Transform parent, GrenadeKind kind)
+    {
+        Build(parent);
+        if (kind != GrenadeKind.Plasma) return;
+        try
+        {
+            var core = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            UnityEngine.Object.Destroy(core.GetComponent<Collider>());
+            core.name = "Plasma Core";
+            core.transform.SetParent(parent, false);
+            core.transform.localPosition = new Vector3(0f, 0.04f, 0f);
+            core.transform.localScale = new Vector3(0.09f, 0.09f, 0.09f);
+            core.GetComponent<MeshRenderer>().sharedMaterial = HaloGrenade.GlowMaterial();
+
+            var glow = new GameObject("Plasma Glow");
+            glow.transform.SetParent(parent, false);
+            var light = glow.AddComponent<EffectLight>();
+            light.Color = HaloGrenade.FlashColor(GrenadeKind.Plasma);
+            light.Range = 1.5f;
+            light.Intensity = 1.5f;
+            light.enabled = true;
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.EZ.AbsurdItems couldn't add the Plasma Grenade's glow: {e.Message}");
+        }
+    }
+
+    private static void Build(Transform parent)
     {
         string source = "fallback capsule";
         try
@@ -171,7 +203,7 @@ internal static class GrenadeModel
             if (!logged)
             {
                 logged = true;
-                Plugin.Logger.LogInfo($"GTFO.EZ.AbsurdItems Hand Grenade model: {source}.");
+                Plugin.Logger.LogInfo($"GTFO.EZ.AbsurdItems grenade model: {source}.");
             }
         }
     }

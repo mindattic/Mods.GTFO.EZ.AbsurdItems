@@ -6,9 +6,9 @@ and underscores, so they can't contain a period.)*
 GTFO.EZ.AbsurdItems is a GTFO.EZ companion mod, built on [GTFO.EZ](https://github.com/mindattic/GTFO.EZ)'s core: it carries GTFO.EZ's shared code (the Insert/Delete infinite health and ammo toggles, and MessageHelper, which puts on-screen messages wherever they fit) and works with or without GTFO.EZ installed. It was called GTFO.AbsurdItems before its first release.
 
 A BepInEx plugin for GTFO that changes items and pickups: artifacts buff whoever picks them up for
-the rest of the level, two new consumables - the **Hand Grenade** and the **Stim Pack** - and the
-consumables found in lockers, boxes and lying around are a few small health, tool and ammo kits plus
-those two. No game files are shipped or edited.
+the rest of the level, three new consumables - the **Frag Grenade** and **Plasma Grenade** (Halo 3's, thrown instantly with
+Halo's physics) and the **Stim Pack** - and the consumables found in lockers, boxes and lying around
+are a few small health, tool and ammo kits plus those three. No game files are shipped or edited.
 
 **Every feature has its own on/off switch, and its numbers can be retuned,** in the config file
 BepInEx creates on first launch: `BepInEx\config\MindAttic.GTFO.EZ.AbsurdItems.cfg`. Its first entry,
@@ -23,14 +23,14 @@ as not installed.
 | [Artifact buffs](#artifact-buffs) (Bold / Aggressive / Muted) | count toward boosters only | +5% max health / +5% damage / 5% harder to detect, each, for the level | `[Artifacts] Artifact Buffs Enabled` |
 | [Artifact glow](#artifact-glow) | plain model | glows and is tinted in its category's color: Aggressive red, Muted blue, Bold green | `[Artifacts] Artifact Glow Enabled` |
 | [Breadcrumbs](#breadcrumbs) | nothing marks where you've been | a glow stick marker drops at an opened container, an unlocked door, an opened door and a newly entered area | `[Breadcrumbs]` (one switch per kind) |
-| [Hand Grenade](#hand-grenade) (new consumable) | - | a lock melter thrown like a glowstick, blowing after 3 s; found as loot, 2-5 a pickup, up to 20 carried | `[Hand Grenade] Hand Grenade Enabled` |
+| [Frag and Plasma Grenades](#frag-and-plasma-grenades) (new consumables) | - | Halo 3's grenades, thrown the instant you press fire with Halo's speed, gravity and fuses; the frag blows on hitting an enemy, the plasma sticks and makes it panic; found as loot, 2-5 a pickup, up to 20 carried | `[Frag Grenade] Frag Grenade Enabled`, `[Plasma Grenade] Plasma Grenade Enabled` |
 | [Stim Pack](#stim-pack) (new consumable) | - | heals 33% of max health and can overheal to 200%, draining back down; +33% damage for 15 s | `[Stim Pack] Stim Pack Enabled` |
 | [Consumables are kits](#consumables-are-kits) (lockers, boxes, lying around) | mixed items | a few small health, tool and ammo kits, 1-2 charges each, adding about 20% to the zone's resource packs | `[Loot] Consumables Are Kits` |
-| [Loot mix](#loot-mix) | - | Hand Grenades and Stim Packs join the kits; 60% of the loot lies out in the open | `[Loot] Loot Mix Enabled` |
+| [Loot mix](#loot-mix) | - | Frag and Plasma Grenades and Stim Packs join the kits; 60% of the loot lies out in the open | `[Loot] Loot Mix Enabled` |
 | [Infinite ammo / health](#infinite-ammo-and-health) | none | **Insert** / **Delete** toggles, off at the start | - |
 
-Artifact buffs and *Consumables Are Kits* moved here from GTFO.EZ, the Hand Grenade, Stim Pack and
-Loot Mix from GTFO.EZ.AbsurdWeapons - each with the same settings and defaults, except that the kit
+Artifact buffs and *Consumables Are Kits* moved here from GTFO.EZ, the Hand Grenade (since split into
+the Frag and Plasma Grenades), Stim Pack and Loot Mix from GTFO.EZ.AbsurdWeapons - each with the same settings and defaults, except that the kit
 settings both of those mods had are now one set (see [`[Loot]`](#loot)).
 
 ## Artifact buffs
@@ -48,7 +48,7 @@ Aggressive; max health only changes on your own game.
 |---|---|---|
 | `Artifact Buffs Enabled` | true | Turns artifact buffs on or off. |
 | `Bold: Max Health (%)` | 5 | Max health added per Bold artifact, in percent of your starting max health. |
-| `Aggressive: Damage (%)` | 5 | Damage to enemies (guns, melee and Hand Grenades) added per Aggressive artifact. |
+| `Aggressive: Damage (%)` | 5 | Damage to enemies (guns, melee and grenades) added per Aggressive artifact. |
 | `Muted: Quieter (%)` | 5 | How much harder you are to detect per Muted artifact (capped at 75%). |
 
 ## Artifact glow
@@ -93,8 +93,8 @@ first, and its own consumable spawn odds are skipped while this is on.
 
 ## Loot mix
 
-On top of the kits, with *Loot Mix Enabled* (on by default): **Hand Grenades** at 4 to the kits' 3,
-so grenades are common, and **Stim Packs** at 1 - both in the same lottery as the kits, so the kits
+On top of the kits, with *Loot Mix Enabled* (on by default): **Frag Grenades** and **Plasma Grenades**
+at 2 each (4 together) to the kits' 3, so grenades are common, and **Stim Packs** at 1 - all in the same lottery as the kits, so the kits
 still add their 20% and these come on top. 60% of the loot (*OutInTheOpenShare*) lies out in the
 open, like artifacts, instead of in boxes and lockers. Off: kits only, where the game puts them.
 It's one kit-loot run either way, with one set of kit settings.
@@ -112,52 +112,93 @@ All of it takes effect on restart.
 | `Ammo Kit Weight` | 1 | The same for ammo kits. |
 | `Kit Charges Min` | 1 | Fewest charges a kit holds. |
 | `Kit Charges Max` | 2 | Most charges a kit holds. |
-| `Loot Mix Enabled` | true | Hand Grenades and Stim Packs join the kits, and *OutInTheOpenShare* of the loot lies out in the open. |
-| `HandGrenadeWeight` | 4 | With Loot Mix on: odds a loot consumable is a Hand Grenade, against the kits' weights (1 each). |
+| `Loot Mix Enabled` | true | Frag and Plasma Grenades and Stim Packs join the kits, and *OutInTheOpenShare* of the loot lies out in the open. |
+| `FragGrenadeWeight` | 2 | With Loot Mix on: odds a loot consumable is a Frag Grenade, against the kits' weights (1 each). |
+| `PlasmaGrenadeWeight` | 2 | With Loot Mix on: odds it's a Plasma Grenade. (Together they're the old `HandGrenadeWeight`, 4, which is split between them once.) |
 | `StimPackWeight` | 1 | With Loot Mix on: relative odds it's a Stim Pack (only while the Stim Pack is switched on). |
 | `OutInTheOpenShare` | 0.6 | With Loot Mix on: share (0-1) of the loot left lying out in the open instead of in boxes and lockers. |
 
-With every kit weight at 0, no kits spawn - only Loot Mix's Hand Grenades and Stim Packs, if it's on.
+With every kit weight at 0, no kits spawn - only Loot Mix's grenades and Stim Packs, if it's on.
 
 GTFO.EZ.AbsurdWeapons' Loot Mix had its own copies of the kit settings (`KitLootPercent`,
 `HealthKitWeight`, `ToolKitWeight`, `AmmoKitWeight`, `KitChargesMin`, `KitChargesMax`); they're
 merged into GTFO.EZ's names above (`Kit Loot (%)`, `Health Kit Weight`, ...), which mean the same
-and have the same defaults. Its `Loot Mix Enabled`, `HandGrenadeWeight`, `StimPackWeight` and
-`OutInTheOpenShare` keep their names.
+and have the same defaults. Its `Loot Mix Enabled`, `StimPackWeight` and `OutInTheOpenShare` keep
+their names; its `HandGrenadeWeight` is split between `FragGrenadeWeight` and `PlasmaGrenadeWeight`.
 
-## Hand Grenade
+## Frag and Plasma Grenades
 
-The glowstick's own item, cloned - so the throw, bounce and sync are all vanilla - wearing a lock
-melter's look. Hold to wind up and release to throw (twice as hard as a glowstick); it bounces
-around, flashing red faster and faster, and blows after **3 seconds**: 60 damage at the center (more with damage boosts),
-falling to a quarter at 6 m, x6 stagger, and it breaks padlocks in reach. It never hurts players.
+Two consumables built on Halo 3's grenades, with Halo's numbers converted to GTFO's metres (Halo's
+world unit is taken as 10 ft = 3.048 m). **Press fire and it's thrown at once** - no wind-up - straight
+along your aim at **30.5 m/s** (Halo 3: 10 world units/s), under **11.4 m/s2** of its own gravity
+(Halo 3: 90% of Halo's gravity), flown on Halo's 30-ticks-a-second step so it takes the same path on
+every player's screen. The next one is ready about 0.6 s later.
+
+- **Frag Grenade** - the lock melter's look, blinking red faster and faster. It bounces off walls and
+  floors (keeping about half its speed) and goes off **0.5 s after its first bounce off the ground,
+  never sooner than 1.3 s after the throw** (Halo 3's fuse) - or **the moment it hits an enemy**.
+- **Plasma Grenade** - the same shell with a glowing blue core and a blue light. It **sticks to the
+  first thing it hits**: a wall, a floor, or an enemy, riding along on that enemy's body part. It goes
+  off **0.9 s after sticking, never sooner than 1.3 s after the throw** (Halo 3; `StuckFuseSeconds` -
+  Halo: Combat Evolved's was 3 s). **An enemy with one stuck to it panics**: it stops attacking and
+  chasing and runs - away from the players, or (half the time, rolled per enemy) into its nearest
+  friends, taking the blast to them. It never comes at you.
+
+Both blasts are Halo 3's shape: full damage out to 1.5 m, falling to Halo's edge share at 5.3 m (the
+frag to 60/160 of it, the plasma to a quarter), x6 stagger, and they break padlocks in reach. They
+never hurt players. Halo's damage numbers are against Halo's health, so only its ratios carry over:
+the frag does **60** at the center, the plasma **90** (Halo's 240 to 160) plus **112.5** to the enemy
+it's stuck to (Halo's "300, attached only"). Damage boosts (Aggressive artifacts, a Stim Pack) add to
+all of it.
 
 Nobody starts with any: **each one you find** as loot (see [Loot mix](#loot-mix)) **holds 2 to 5**
-(picked once per pickup, the same for every player), up to **20** carried.
-Thrown ones are gone. The terminal lists them as Hand Grenades (key
-HAND_GRENADE), not glow sticks.
+(picked once per pickup, the same for every player), up to **20** carried. Each is its own consumable
+with its own stack; the one consumable slot holds one kind at a time, so picking up the other kind
+swaps it for what you carry, like any two different consumables. Thrown ones are gone. The terminal
+lists them as Frag / Plasma Grenades (FRAG_GRENADE, PLASMA_GRENADE), not glow sticks.
 
-### `[Hand Grenade]`
+**In multiplayer** every throw is sent to the whole team and flown on every game; the thrower's game
+decides what it hits and when it goes off, deals the damage (which syncs the game's own way) and
+tells everyone else, so sticks and blasts land in the same place for all. The host runs the panic -
+enemies are the host's - and everyone sees it through the game's own enemy sync.
+
+What's Halo's and what's an estimate: the throw speed, the 90% gravity, both fuses, the blast radii
+and the damage ratios are Halo 3's own values (Halopedia's H3:Frag Grenade and H3:Plasma Grenade
+pages). Halo's base gravity (4.17 world units/s2, about 12.7 m/s2) is an estimate - no source states
+it; it fits Halo 3's jump timing (a 3.08 wu/s jump lasting about 1.4 s gives 4.4). The bounce (half
+the speed kept, 30% lost along the surface), the throw leaving straight along the crosshair, the
+grenade's size and the time between throws are estimates too. Every value and its source is
+commented in `src/GTFO.EZ.AbsurdItems/Pure/HaloGrenades.cs`.
+
+### `[Frag Grenade]` and `[Plasma Grenade]`
+
+The same keys in each section unless marked.
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Hand Grenade Enabled` | true | Whether the Hand Grenade spawns at all (takes effect on restart). Off: not in the loot. The item is registered either way, so everyone in a lobby holds the same items. |
-| `FuseSeconds` | 3 | Seconds from the throw until it explodes. |
-| `ThrowForceMultiplier` | 2 | Multiplies the glowstick's own throw strength. |
-| `BlastRadius` | 6 | Metres the blast reaches. |
-| `BlastDamage` | 60 | Damage at the blast's center, before damage boosts (Aggressive artifacts, a Stim Pack). |
-| `BlastEdgeFraction` | 0.25 | Share of damage left at the blast's edge. |
+| `Frag Grenade Enabled` / `Plasma Grenade Enabled` | true | Whether it spawns at all (takes effect on restart). Off: not in the loot. The item is registered either way, so everyone in a lobby holds the same items. |
+| `BlastDamage` | 60 frag / 90 plasma | Damage at the blast's center, before damage boosts. |
 | `BlastStagger` | 6 | Blast stagger multiplier. |
 | `PickupCountMin` | 2 | Fewest one pickup holds; each holds a random count from this to `PickupCountMax` (takes effect on restart). |
 | `PickupCountMax` | 5 | Most one pickup holds (takes effect on restart). |
-| `MaxCarried` | 20 | The most you can carry. An install still on the old default (6) moves to 20 once. |
+| `MaxCarried` | 20 | The most you can carry. |
+| `StuckDamage` (plasma) | 112.5 | Extra damage to the enemy it's stuck to, on top of the blast. |
+| `StuckFuseSeconds` (plasma) | 0.9 | Seconds from sticking until it goes off (never sooner than 1.3 s after the throw). Halo: Combat Evolved's 3 gives a longer panic. |
+| `Panic` (plasma) | true | Whether a stuck enemy panics. |
+| `PanicTowardEnemiesChance` (plasma) | 0.5 | Chance (0-1), per stuck enemy, that it runs into the nearest other enemies instead of away from the players. |
+
+**From the Hand Grenade:** your `[Hand Grenade]` settings seed both grenades once: its switch,
+`MaxCarried`, pickup counts and stagger go to both, its `BlastDamage` to the frag (and x1.5 / x1.875
+to the plasma's blast and stuck damage), and `[Loot] HandGrenadeWeight` is split in half between
+`FragGrenadeWeight` and `PlasmaGrenadeWeight`. Its `FuseSeconds`, `BlastRadius`, `BlastEdgeFraction`
+and `ThrowForceMultiplier` are gone - Halo's values replace them.
 
 ### `[Sounds]`
 
 | Setting | Default | What it does |
 |---|---|---|
-| `HandGrenadeThrow` | FRAGGRENADETHROW | Throwing a Hand Grenade (instead of the glowstick's toss). Empty = silent. |
-| `HandGrenadeBounce` | FRAGGRENADEBOUNCE | A Hand Grenade bouncing (instead of the glowstick's clatter). Empty = silent. |
+| `HandGrenadeThrow` | FRAGGRENADETHROW | Throwing a grenade (the key keeps the Hand Grenade's name). Empty = silent. |
+| `HandGrenadeBounce` | FRAGGRENADEBOUNCE | A Frag Grenade bouncing, or a Plasma Grenade sticking. Empty = silent. |
 
 ## Stim Pack
 
@@ -176,7 +217,7 @@ health, so a Bold artifact's bonus survives it. Found as loot (see [Loot mix](#l
 | `HealPercent` | 33 | Health a Stim Pack gives, in percent of max health. |
 | `MaxHealthPercent` | 200 | How high it can take your health, in percent of max health. |
 | `DrainPercentPerSecond` | 1 | How fast health above max drains back to max, in percent of max a second. |
-| `DamageBoostPercent` | 33 | Extra damage dealt (guns, melee and Hand Grenades) while the boost runs, in percent. |
+| `DamageBoostPercent` | 33 | Extra damage dealt (guns, melee and grenades) while the boost runs, in percent. |
 | `DamageBoostSeconds` | 15 | How long the damage boost lasts after a Stim Pack. |
 
 ## Infinite ammo and health
@@ -200,9 +241,12 @@ twice.
   leaves artifacts in place, so artifact buffs work with it installed.
 - **Your old settings carry over.** On first run, each moved setting that isn't in this mod's
   `.cfg` yet is copied from `MindAttic.GTFO.EZ.cfg` (artifact buffs, *Consumables Are Kits* and the
-  kit settings) or `MindAttic.GTFO.EZ.AbsurdWeapons.cfg` (Hand Grenade, Stim Pack, their sounds, Loot
+  kit settings) or `MindAttic.GTFO.EZ.AbsurdWeapons.cfg` (Hand Grenade - into both grenades, Stim Pack, their sounds, Loot
   Mix - and the kit settings instead, if its Loot Mix was on, since those were the ones in use).
   After that this mod's `.cfg` is the one that counts; a setting already in it is never overwritten.
+- **GTFO.EZ.AbsurdWeapons' Shadow Dagger** patches the same four enemy-targeting methods the Plasma
+  Grenade's panic does (each only ever turns a target away); the panic's patches are pinned after
+  it.
 - **Turning a mod off:** every GTFO.* mod's `.cfg` starts with `[0. Mod] Enabled`; a mod switched
   off there counts as not installed for the others sharing its code.
 - Artifact buffs are confirmed in play. Muted scales the game's per-player detection modifier
@@ -227,14 +271,17 @@ src/GTFO.EZ.AbsurdItems/
   ArtifactGlow.cs        Lights and tints each artifact in its category's color
   Breadcrumbs.cs         Glow stick markers at opened containers/doors and newly entered areas
   ConsumablesAreKits.cs  Runs the shared kit loot at GameDataInit, after GTFO.EZ's tweaks, with Loot
-                         Mix's Hand Grenades and Stim Packs as extras
-  HandGrenade.cs         Hand Grenade consumable: glowstick clone, lock-melter look, throw force, fuse, cap
+                         Mix's Frag/Plasma Grenades and Stim Packs as extras
+  Grenades.cs            Frag and Plasma Grenade items: glowstick clones, looks, instant throw, pickup counts, cap
+  HaloGrenade.cs         A thrown grenade flown with Halo 3's physics: bounce/stick, fuses, blast, team sync
+  GrenadePanic.cs        Host: an enemy with a plasma stuck to it stops targeting players and runs
   StimPack.cs            Stim Pack consumable: I2-LP clone, overheal, damage boost
-  Blast.cs               The Hand Grenade's explosion, area damage, padlock damage, model and flash
-  Sounds.cs              The Hand Grenade's [Sounds] events
+  Blast.cs               The grenades' explosion, area damage, padlock damage, model and flash
+  Sounds.cs              The grenades' [Sounds] events
   ConfigImport.cs        Carries moved settings over from GTFO.EZ's and GTFO.EZ.AbsurdWeapons' cfgs, once
   DataBlocks.cs          Datablock cloning
   Pure/Formulas.cs       The items' numbers (no game types; unit tested)
+  Pure/HaloGrenades.cs   Halo 3's grenade values converted to metres, with sources (unit tested)
   LocalPlayerDamage.cs   Tells your own damage component from the host's bots'
   NonNegative.cs         Holds percentage and weight settings at 0 or more
 package/                 Thunderstore manifest, icon (256x256, from logo.png), README and changelog
