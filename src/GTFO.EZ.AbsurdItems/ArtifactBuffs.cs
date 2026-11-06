@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Agents;
 using BepInEx.Configuration;
 using GameData;
 using HarmonyLib;
 using LevelGeneration;
+using MindAttic.GTFO.Shared;
 using Player;
+using SNetwork;
 
 namespace GTFO.EZ.AbsurdItems;
 
@@ -14,6 +17,8 @@ namespace GTFO.EZ.AbsurdItems;
 // for enemies to detect. Counts are kept per player on every client - OnSyncStateChange runs
 // everywhere with the picker - because enemy detection runs on the host and damage on whoever
 // dealt it, so each needs everyone's counts; max health only ever changes on the owner's own game.
+// GAI-T38: since every machine sees every pickup, every machine's event log also says so ("Bob picked
+// up a Bold artifact: +5% max health, Bold x3") followed by the team's tally - no network event needed.
 // Moved here from GTFO.EZ with the same config keys and defaults.
 internal static class ArtifactBuffs
 {
@@ -68,12 +73,63 @@ internal static class ArtifactBuffs
             Counted[key] = (owner.Lookup, category);
             Change(owner.Lookup, category, +1);
             Plugin.Logger.LogInfo($"Artifact buffs: {owner.NickName} picked up a {Name(category)} artifact ({Count(player, category)} this level).");
+            Announce(owner, category);
         }
         else if (Counted.TryGetValue(key, out var counted))
         {
             Counted.Remove(key);
             Change(counted.Player, counted.Category, -1);
         }
+    }
+
+    // "Bob picked up a Bold artifact: +5% max health, Bold x3", then "Team artifacts - Bob: Bold 3 |
+    // Amy: Muted 1, Aggressive 2" - in the event log of every machine (each sees the pickup itself).
+    private static void Announce(SNet_Player owner, ArtifactCategory category)
+    {
+        if (GameStateManager.CurrentStateName != eGameStateName.InLevel) return;
+        var count = CountsByPlayer.TryGetValue(owner.Lookup, out var counts) ? counts[(int)category] : 0;
+        var name = string.IsNullOrWhiteSpace(owner.NickName) ? "Someone" : owner.NickName;
+        Log($"{name} picked up a {Name(category)} artifact: {Effect(category)}, {Name(category)} x{count}");
+        var summary = TeamSummary();
+        if (summary.Length > 0) Log($"Team artifacts - {summary}");
+    }
+
+    internal static string TeamSummary()
+    {
+        var parts = new List<string>();
+        foreach (var (lookup, counts) in CountsByPlayer)
+        {
+            var held = new[] { ArtifactCategory.Uncommon, ArtifactCategory.Rare, ArtifactCategory.Common }
+                .Where(c => counts[(int)c] > 0)
+                .Select(c => $"{Name(c)} {counts[(int)c]}")
+                .ToList();
+            if (held.Count > 0) parts.Add($"{NameOf(lookup)}: {string.Join(", ", held)}");
+        }
+        return string.Join(" | ", parts);
+    }
+
+    private static string Effect(ArtifactCategory category) => category switch
+    {
+        ArtifactCategory.Uncommon => $"+{BoldMaxHealthPercent.Value:0.#}% max health",
+        ArtifactCategory.Rare => $"+{AggressiveDamagePercent.Value:0.#}% damage",
+        ArtifactCategory.Common => $"{MutedQuieterPercent.Value:0.#}% harder to detect",
+        _ => "no buff",
+    };
+
+    private static string NameOf(ulong lookup)
+    {
+        try
+        {
+            if (SNet.TryGetPlayer(lookup, out var player) && player != null && !string.IsNullOrWhiteSpace(player.NickName))
+                return player.NickName;
+        }
+        catch (Exception) { }
+        return "Someone";
+    }
+
+    private static void Log(string text)
+    {
+        if (!MessageHelper.Show(text, MessageType.EventLog)) Plugin.Logger.LogInfo($"Artifact buffs: {text}");
     }
 
     private static void Change(ulong player, ArtifactCategory category, int by)

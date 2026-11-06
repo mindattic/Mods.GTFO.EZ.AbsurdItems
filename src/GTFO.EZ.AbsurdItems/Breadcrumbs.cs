@@ -18,6 +18,8 @@ namespace GTFO.EZ.AbsurdItems;
 /// been picked over and which way you've already come. Each kind of marker has its own on/off
 /// switch; every marker drops once per container/door/area, even across checkpoint restarts within
 /// the same life (nothing is un-marked by <see cref="ResetForLevel"/> until the level actually ends).
+/// New-area markers are dropped for every agent - you, your teammates and bots - not just you (GAI-T38):
+/// each marks the areas it walks into first, in that player's own colour, so the trail says who's been where.
 /// </summary>
 internal static class Breadcrumbs
 {
@@ -41,14 +43,15 @@ internal static class Breadcrumbs
         DoorsOpenedEnabled = config.Bind(s, "Mark Opened Doors", true,
             "Drops a glow stick marker at a door the moment it's opened.");
         AreasEnabled = config.Bind(s, "Mark New Areas", true,
-            "Drops a glow stick marker the first time you walk into a new area, leaving a breadcrumb trail of " +
-            "where you've already been.");
+            "Drops a glow stick marker the first time anyone - you, a teammate or a bot - walks into a new area, " +
+            "in that player's colour, leaving a breadcrumb trail of where each of you has already been.");
     }
 
     private static readonly HashSet<IntPtr> openedContainers = new();
     private static readonly HashSet<IntPtr> unlockedDoors = new();
     private static readonly HashSet<IntPtr> openedDoors = new();
-    private static readonly HashSet<IntPtr> visitedAreas = new();
+    // Per player: each agent marks the areas it's first into, so the same area can carry several colours.
+    private static readonly HashSet<(IntPtr Area, ulong Player)> visitedAreas = new();
 
     // The markers dropped this level. They're plain root objects the level's own cleanup doesn't
     // know about, so without this they'd stay floating where the last level's doors and lockers were.
@@ -87,23 +90,26 @@ internal static class Breadcrumbs
     }
 
     [HideFromIl2Cpp]
-    internal static void AreaEntered(IntPtr area, Vector3 position)
+    internal static void AreaEntered(IntPtr area, ulong player, Color color, Vector3 position)
     {
-        if (!AreasEnabled.Value || !visitedAreas.Add(area)) return;
-        Drop(position);
+        if (!AreasEnabled.Value || !visitedAreas.Add((area, player))) return;
+        Drop(position, color);
     }
 
     [HideFromIl2Cpp]
-    private static void Drop(Vector3 position)
+    private static void Drop(Vector3 position) => Drop(position, MarkerColor);
+
+    [HideFromIl2Cpp]
+    private static void Drop(Vector3 position, Color color)
     {
         try
         {
             var go = new GameObject("GTFO.EZ.AbsurdItems Breadcrumb");
             markers.Add(go);
             go.transform.position = position + Vector3.up * 0.05f;
-            BuildModel(go.transform);
+            BuildModel(go.transform, color);
             var light = go.AddComponent<EffectLight>();
-            light.Color = MarkerColor;
+            light.Color = color;
             light.Range = Range;
             light.Intensity = Intensity;
             light.enabled = true;
@@ -116,7 +122,7 @@ internal static class Breadcrumbs
 
     // A small capsule standing in for a glow stick: no real item or pickup behavior, just the look.
     [HideFromIl2Cpp]
-    private static void BuildModel(Transform parent)
+    private static void BuildModel(Transform parent, Color color)
     {
         var capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         UnityEngine.Object.Destroy(capsule.GetComponent<Collider>());
@@ -127,8 +133,8 @@ internal static class Breadcrumbs
         // Shader.Find returns null when the build doesn't ship the shader; a Material can't be made
         // from that, and the throw would skip the marker's light. Tint the capsule's own material then.
         var shader = Shader.Find("Unlit/Color");
-        if (shader != null) renderer.material = new Material(shader) { color = MarkerColor };
-        else renderer.material.color = MarkerColor;
+        if (shader != null) renderer.material = new Material(shader) { color = color };
+        else renderer.material.color = color;
     }
 }
 
@@ -185,6 +191,21 @@ internal static class Breadcrumbs_Patches
         }
     }
 
+    // The player's own colour (the one the game uses for their name and marker), at full opacity
+    // for the glow; the plain glow-stick green when it can't be read.
+    private static Color PlayerColor(SNetwork.SNet_Player owner)
+    {
+        try
+        {
+            var c = owner.PlayerColor;
+            return new Color(c.r, c.g, c.b, 1f);
+        }
+        catch (Exception)
+        {
+            return new Color(0.65f, 0.95f, 0.25f);
+        }
+    }
+
     private static void Mark(eDoorStatus status, IntPtr door, Vector3 position)
     {
         if (status == eDoorStatus.Unlocked) Breadcrumbs.DoorUnlocked(door, position);
@@ -197,10 +218,13 @@ internal static class Breadcrumbs_Patches
     {
         try
         {
-            if (!__instance.IsLocallyOwned || value == null) return;
+            // Every agent, not just the local player (GAI-T38): each machine sees every agent's course
+            // node change, so each drops the same per-player trail.
+            if (value == null) return;
             var area = value.m_area;
-            if (area == null) return;
-            Breadcrumbs.AreaEntered(area.Pointer, __instance.Position);
+            var owner = __instance.Owner;
+            if (area == null || owner == null) return;
+            Breadcrumbs.AreaEntered(area.Pointer, owner.Lookup, PlayerColor(owner), __instance.Position);
         }
         catch (Exception e)
         {

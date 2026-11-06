@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Artifact pickups are announced to the whole team.** Every player's event log says who picked up
+  what and what it gave ("Bob picked up a Bold artifact: +5% max health, Bold x3"), then the team's
+  tally ("Team artifacts - Bob: Bold 3 | Amy: Aggressive 1, Muted 2").
+- **New-area breadcrumbs for everyone, in their own colour.** Teammates' and bots' first steps into
+  a new area now drop a marker too (it used to be only yours), tinted in that player's colour.
 - **Hand Grenade pickups hold 2 to 5** (was 1), a whole number picked once per pickup from its
   level-generation seed, so every player sees the same count and whoever picks it up gets it.
   `[Hand Grenade] PickupCount` is replaced by `PickupCountMin` (2) and `PickupCountMax` (5).

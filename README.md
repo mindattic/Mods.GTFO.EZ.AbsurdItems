@@ -42,7 +42,9 @@ Uncommon) adds max health, healed too; each **Aggressive** (Rare) adds damage to
 melee; each **Muted** (Common) makes you harder for enemies to detect, capped at 75%. A checkpoint
 restart that puts an artifact back in the level takes its buff off again. Every player's pickups
 count on every game, so the host's enemies hear the Muted and each player's own hits carry the
-Aggressive; max health only changes on your own game.
+Aggressive; max health only changes on your own game. Every pickup is also announced in everyone's
+event log - "Bob picked up a Bold artifact: +5% max health, Bold x3" - followed by the team's tally,
+e.g. "Team artifacts - Bob: Bold 3 | Amy: Aggressive 1, Muted 2".
 
 ### `[Artifacts]`
 
@@ -71,7 +73,9 @@ A small glowing marker - a cosmetic stand-in for a glow stick, no pickup behavio
 wherever the team has already been or already looted: a resource container (locker/case) opened, a
 door unlocked, a door opened, or a new area walked into for the first time. A glance at the trail
 says what's already been picked over and which way you've already come. Each marker drops once per
-container, door or area for the level - a checkpoint restart doesn't duplicate them.
+container, door or area for the level - a checkpoint restart doesn't duplicate them. New-area
+markers are dropped for every agent - you, your teammates and bots - each in that player's own
+colour, so the trail shows who has been where (one marker per player per area).
 
 ### `[Breadcrumbs]`
 
@@ -80,7 +84,7 @@ container, door or area for the level - a checkpoint restart doesn't duplicate t
 | `Mark Opened Containers` | true | Drops a marker at a resource container (locker/case) the moment it's opened. |
 | `Mark Unlocked Doors` | true | Drops a marker at a door the moment it's unlocked. |
 | `Mark Opened Doors` | true | Drops a marker at a door the moment it's opened. |
-| `Mark New Areas` | true | Drops a marker the first time you walk into a new area. |
+| `Mark New Areas` | true | Drops a marker, in that player's colour, the first time anyone (you, a teammate or a bot) walks into a new area. |
 
 ## Consumables are kits
 
