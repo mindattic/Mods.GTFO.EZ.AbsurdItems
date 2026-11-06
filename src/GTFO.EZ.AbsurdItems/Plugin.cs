@@ -1,4 +1,6 @@
+using System;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
@@ -45,6 +47,7 @@ public class Plugin : BasePlugin
         StimPack.Bind(Config);
         Sounds.Bind(Config);
         ConfigImport.Apply(Config); // after every Bind: values from GTFO.EZ's / GTFO.EZ.AbsurdWeapons' cfgs, once
+        ApplyDefaultMigrations(); // after the import, so an imported old default moves on too
         ClassInjector.RegisterTypeInIl2Cpp<BurstFlash>();
         ClassInjector.RegisterTypeInIl2Cpp<HandGrenadeFuse>();
         ClassInjector.RegisterTypeInIl2Cpp<ArtifactGlow>();
@@ -54,5 +57,41 @@ public class Plugin : BasePlugin
         AddComponent<ArtifactGlow>();
 
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
+    }
+
+    // BepInEx keeps whatever value is already in an upgrader's .cfg, so a changed default never
+    // reaches existing installs. Each entry moves a setting still on its old default to the new one,
+    // once: only for installs whose [Internal] migration version is below the entry's (the same
+    // scheme as GTFO.EZ's, under its own key so the two .cfg files never share one), so a player who
+    // sets it back afterwards keeps their value.
+    private static readonly (int Version, Func<ConfigEntry<int>> Entry, int OldDefault)[] IntDefaultMigrations =
+    {
+        (1, () => HandGrenade.MaxCarried, 6), // GAI-T36: carry up to 20 Hand Grenades
+    };
+
+    private void ApplyDefaultMigrations()
+    {
+        try
+        {
+            var version = Config.Bind("Internal", "AbsurdItems Default Migration Version", 0,
+                "Internal bookkeeping - do not edit. Tracks which one-time default migrations have already run.");
+            var reached = version.Value;
+            var latest = reached;
+            foreach (var (at, entry, oldDefault) in IntDefaultMigrations)
+            {
+                var e = entry();
+                if (reached < at && e.Value == oldDefault)
+                {
+                    e.Value = (int)e.DefaultValue;
+                    Logger.LogInfo($"Config: [{e.Definition.Section}] {e.Definition.Key} moved from the old default {oldDefault} to {e.Value}.");
+                }
+                latest = Math.Max(latest, at);
+            }
+            if (version.Value != latest) version.Value = latest;
+        }
+        catch (Exception e)
+        {
+            Logger.LogWarning($"Config: couldn't apply the default migrations. {e.Message}");
+        }
     }
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Hand Grenade pickups hold 2 to 5** (was 1), a whole number picked once per pickup from its
+  level-generation seed, so every player sees the same count and whoever picks it up gets it.
+  `[Hand Grenade] PickupCount` is replaced by `PickupCountMin` (2) and `PickupCountMax` (5).
+- **Carry up to 20 Hand Grenades** (`MaxCarried`, was 6). An install still on the old default 6 is
+  moved to 20 once; a value you set yourself is kept.
+
 ## v20
 
 - Bumps the `BepInExPack_GTFO` dependency to 3.2.4.

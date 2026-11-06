@@ -64,7 +64,7 @@ internal static class ConfigImport
 
             // GTFO.EZ.AbsurdWeapons: the Hand Grenade, the Stim Pack, their sounds and Loot Mix's own keys.
             foreach (var key in new[] { "Hand Grenade Enabled", "FuseSeconds", "BlastRadius", "BlastDamage", "BlastEdgeFraction",
-                         "BlastStagger", "MaxCarried", "PickupCount", "ThrowForceMultiplier" })
+                         "BlastStagger", "MaxCarried", "ThrowForceMultiplier" })
                 Copy(aw, AbsurdWeaponsFile, "Hand Grenade", key, "Hand Grenade", key);
             foreach (var key in new[] { "Stim Pack Enabled", "HealPercent", "MaxHealthPercent", "DrainPercentPerSecond",
                          "DamageBoostPercent", "DamageBoostSeconds" })

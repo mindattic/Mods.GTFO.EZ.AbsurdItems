@@ -25,7 +25,7 @@ as not installed.
 | [Artifact buffs](#artifact-buffs) (Bold / Aggressive / Muted) | count toward boosters only | +5% max health / +5% damage / 5% harder to detect, each, for the level | `[Artifacts] Artifact Buffs Enabled` |
 | [Artifact glow](#artifact-glow) | plain model | glows and is tinted in its category's color: Aggressive red, Muted blue, Bold green | `[Artifacts] Artifact Glow Enabled` |
 | [Breadcrumbs](#breadcrumbs) | nothing marks where you've been | a glow stick marker drops at an opened container, an unlocked door, an opened door and a newly entered area | `[Breadcrumbs]` (one switch per kind) |
-| [Hand Grenade](#hand-grenade) (new consumable) | - | a lock melter thrown like a glowstick, blowing after 3 s; found as loot, up to 6 carried | `[Hand Grenade] Hand Grenade Enabled` |
+| [Hand Grenade](#hand-grenade) (new consumable) | - | a lock melter thrown like a glowstick, blowing after 3 s; found as loot, 2-5 a pickup, up to 20 carried | `[Hand Grenade] Hand Grenade Enabled` |
 | [Stim Pack](#stim-pack) (new consumable) | - | heals 33% of max health and can overheal to 200%, draining back down; +33% damage for 15 s | `[Stim Pack] Stim Pack Enabled` |
 | [Consumables are kits](#consumables-are-kits) (lockers, boxes, lying around) | mixed items | a few small health, tool and ammo kits, 1-2 charges each, adding about 20% to the zone's resource packs | `[Loot] Consumables Are Kits` |
 | [Loot mix](#loot-mix) | - | Hand Grenades and Stim Packs join the kits; 60% of the loot lies out in the open | `[Loot] Loot Mix Enabled` |
@@ -134,8 +134,9 @@ melter's look. Hold to wind up and release to throw (twice as hard as a glowstic
 around, flashing red faster and faster, and blows after **3 seconds**: 60 damage at the center (more with damage boosts),
 falling to a quarter at 6 m, x6 stagger, and it breaks padlocks in reach. It never hurts players.
 
-Nobody starts with any: **each one you find** as loot (see [Loot mix](#loot-mix)) **is 1 more**, up
-to **6** carried. Thrown ones are gone. The terminal lists them as Hand Grenades (key
+Nobody starts with any: **each one you find** as loot (see [Loot mix](#loot-mix)) **holds 2 to 5**
+(picked once per pickup, the same for every player), up to **20** carried.
+Thrown ones are gone. The terminal lists them as Hand Grenades (key
 HAND_GRENADE), not glow sticks.
 
 ### `[Hand Grenade]`
@@ -149,8 +150,9 @@ HAND_GRENADE), not glow sticks.
 | `BlastDamage` | 60 | Damage at the blast's center, before damage boosts (Aggressive artifacts, a Stim Pack). |
 | `BlastEdgeFraction` | 0.25 | Share of damage left at the blast's edge. |
 | `BlastStagger` | 6 | Blast stagger multiplier. |
-| `PickupCount` | 1 | How many one pickup holds (takes effect on restart). |
-| `MaxCarried` | 6 | The most you can carry. |
+| `PickupCountMin` | 2 | Fewest one pickup holds; each holds a random count from this to `PickupCountMax` (takes effect on restart). |
+| `PickupCountMax` | 5 | Most one pickup holds (takes effect on restart). |
+| `MaxCarried` | 20 | The most you can carry. An install still on the old default (6) moves to 20 once. |
 
 ### `[Sounds]`
 

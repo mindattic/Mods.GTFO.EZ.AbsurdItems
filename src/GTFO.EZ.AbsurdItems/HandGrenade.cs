@@ -18,8 +18,8 @@ namespace GTFO.EZ.AbsurdItems;
 /// but it's a lock melter rigged to blow. It's the glowstick's own item cloned under a new id, so
 /// the game's throw, physics bounce and sync all stay vanilla; this mod swaps the look for the lock
 /// melter's (in your hand and in flight), switches the glow off, and blows it up when its fuse
-/// runs out. Nobody starts with any: every one is found as loot, <see cref="PickupCount"/> to a
-/// pickup, up to <see cref="MaxCarried"/> carried; thrown ones are gone.
+/// runs out. Nobody starts with any: every one is found as loot, <see cref="PickupMin"/> to
+/// <see cref="PickupMax"/> to a pickup, up to <see cref="MaxCarried"/> carried; thrown ones are gone.
 /// </summary>
 [HarmonyPatch]
 internal static class HandGrenade
@@ -32,7 +32,8 @@ internal static class HandGrenade
     internal static ConfigEntry<float> BlastDamage = null!;
     internal static ConfigEntry<float> BlastEdgeFraction = null!;
     internal static ConfigEntry<float> BlastStagger = null!;
-    internal static ConfigEntry<int> PickupCount = null!;
+    internal static ConfigEntry<int> PickupMin = null!;
+    internal static ConfigEntry<int> PickupMax = null!;
     internal static ConfigEntry<int> MaxCarried = null!;
     internal static ConfigEntry<float> ThrowForceMultiplier = null!;
     internal static ConfigEntry<bool> Enabled = null!;
@@ -48,15 +49,17 @@ internal static class HandGrenade
         BlastDamage = NonNegative.Bind(config, "Hand Grenade", "BlastDamage", 60f, "Damage at the blast's center, before damage boosts (Aggressive artifacts, a Stim Pack).");
         BlastEdgeFraction = NonNegative.Bind(config, "Hand Grenade", "BlastEdgeFraction", 0.25f, "Share of damage left at the blast's edge.");
         BlastStagger = NonNegative.Bind(config, "Hand Grenade", "BlastStagger", 6f, "Blast stagger multiplier.");
-        MaxCarried = AtLeastOne.Bind(config, "Hand Grenade", "MaxCarried", 6, "The most Hand Grenades you can carry.");
-        PickupCount = AtLeastOne.Bind(config, "Hand Grenade", "PickupCount", 1, "How many Hand Grenades one loot pickup holds. Takes effect on restart.");
+        MaxCarried = AtLeastOne.Bind(config, "Hand Grenade", "MaxCarried", 20, "The most Hand Grenades you can carry.");
+        PickupMin = AtLeastOne.Bind(config, "Hand Grenade", "PickupCountMin", 2, "Fewest Hand Grenades one loot pickup holds; each pickup holds a random count from this to PickupCountMax. Takes effect on restart.");
+        PickupMax = AtLeastOne.Bind(config, "Hand Grenade", "PickupCountMax", 5, "Most Hand Grenades one loot pickup holds (below PickupCountMin counts as PickupCountMin). Takes effect on restart.");
         ThrowForceMultiplier = NonNegative.Bind(config, "Hand Grenade", "ThrowForceMultiplier", 2f, "Multiplies the glowstick's own wind-up throw strength, so it lobs much farther.");
     }
 
     internal static bool IsOurs(ItemDataBlock? block) => block != null && block.persistentID == ItemId;
 
     // While Hand Grenades are in the local consumable slot, the slot holds MaxCarried of them (the
-    // item's own cap is the pickup size, 1).
+    // item's own cap is the biggest pickup, PickupCountMax). GTFO.EZ.Shared's infinite ammo (Delete,
+    // GES-T13) refills the slot to this raised AmmoMaxCap.
     internal static void Uncap(InventorySlotAmmo? ammo)
     {
         var cap = Mathf.Max(1, MaxCarried.Value);
@@ -87,6 +90,43 @@ internal static class HandGrenade
         catch (Exception e)
         {
             Plugin.Logger.LogWarning($"GTFO.EZ.AbsurdItems couldn't set the Hand Grenade cap: {e.Message}");
+        }
+    }
+
+    // GAI-T36: each Hand Grenade lying in the level holds PickupCountMin-PickupCountMax of them,
+    // a whole number picked from the pickup's own level-generation seed - the same on every machine
+    // (the level is generated from one seed everywhere), so the count is decided once per pickup and
+    // whoever picks it up, host or client, gets the same number. Picking up adds it to the stack in
+    // the consumable slot, held at MaxCarried. GTFO.EZ.Shared's KitLoot postfixes these same two
+    // methods for the kits; each leaves the other's items alone. GTFO.EZ doesn't patch them.
+    [HarmonyPatch(typeof(LG_PickupItem), nameof(LG_PickupItem.SetupAsConsumable), new[] { typeof(int), typeof(uint) })]
+    [HarmonyPostfix]
+    private static void AfterSetupAsConsumable(LG_PickupItem __instance, int __0) => SetPickupCount(__instance, __0);
+
+    [HarmonyPatch(typeof(LG_PickupItem), nameof(LG_PickupItem.SetupAsConsumable), new[] { typeof(ConsumableDistributionDataBlock), typeof(int), typeof(uint) })]
+    [HarmonyPostfix]
+    private static void AfterSetupAsConsumableFromTable(LG_PickupItem __instance, int __1) => SetPickupCount(__instance, __1);
+
+    private static int loggedPickups;
+
+    private static void SetPickupCount(LG_PickupItem pickup, int seed)
+    {
+        try
+        {
+            var item = pickup.GetComponentInChildren<ConsumablePickup_Core>();
+            if (item == null || !IsOurs(item.ItemDataBlock)) return;
+
+            var count = Formulas.GrenadePickupCount(seed, PickupMin.Value, PickupMax.Value);
+            var custom = item.GetCustomData();
+            if (custom.ammo == count) return;
+            custom.ammo = count;
+            item.SetCustomData(custom, false);
+            try { item.UpdatePickupName(); } catch (Exception) { /* name only */ }
+            if (loggedPickups++ < 3) Plugin.Logger.LogInfo($"GTFO.EZ.AbsurdItems: a Hand Grenade pickup holds {count}.");
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.EZ.AbsurdItems couldn't set a Hand Grenade pickup's count: {e.Message}");
         }
     }
 
@@ -124,8 +164,10 @@ internal static class HandGrenade
             // stick (GLOWSTICK_123) - the clone keeps the glowstick's.
             item.terminalItemLongName = new LocalizedText { Id = 0, UntranslatedText = "Hand Grenade" };
             item.terminalItemShortName = "HAND_GRENADE";
-            item.ConsumableAmmoMin = PickupCount.Value;
-            item.ConsumableAmmoMax = PickupCount.Value;
+            // The game's own roll stays in range; AfterSetupAsConsumable then settles each pickup on
+            // a whole count.
+            item.ConsumableAmmoMin = Mathf.Max(1, PickupMin.Value);
+            item.ConsumableAmmoMax = Mathf.Max(item.ConsumableAmmoMin, PickupMax.Value);
             GameDataBlockBase<ItemDataBlock>.AddBlock(item, -1);
             added = true;
             Plugin.Logger.LogInfo($"GTFO.EZ.AbsurdItems added the Hand Grenade (consumable; item id {ItemId}, cloned from '{source.name}' {source.persistentID}; sync id {item.syncID} vs source {source.syncID}).");
